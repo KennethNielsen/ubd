@@ -16,6 +16,7 @@ from PySide import QtGui, QtCore
 
 
 THREADS = {}
+THREADS_SINGLE = {}
 
 
 def clean_up_threads():
@@ -28,25 +29,56 @@ def clean_up_threads():
     print("Threads now contain", THREADS)
 
 
-def thread_dec(func):
-    """Thread decorator"""
+def live_forever(func):
+    """Thread decorator
+
+    Spawns a thread for the method it decorates
+
+    """
 
     class MyThread(QtCore.QThread):
         """Mythread"""
 
         def run(self):
-            #socket = QTcpSocket()
-            # connect QTcpSocket's signals somewhere meaningful
-            # ...
-            #socket.connectToHost(hostName, portNumber)
-            #self.exec_()
-            #func(*ARGS[0], **ARGS[1])
-            func(*self.___args, **self.___kwargs)
+            func(*self._func_args, **self._func_kwargs)
             clean_up_threads()
 
         def start(self, *args, **kwargs):
-            self.___args = args
-            self.___kwargs = kwargs
+            self._func_args = args
+            self._func_kwargs = kwargs
+            super(MyThread, self).start()
+
+    def new_func(*args, **kwargs):
+        """New func"""
+        # Clean up THREADS
+        clean_up_threads()
+
+        mythread = MyThread()
+        uid = uuid.uuid4()
+        THREADS[uid] = mythread
+        mythread.start(*args, **kwargs)
+
+    return new_func
+
+
+def there_can_be_only_one(func):
+    """Thread decorator
+
+    Spawns a thread for the method it decorates, but makes sure that
+    only one thread is spawned for each method
+
+    """
+
+    class MyThread(QtCore.QThread):
+        """Mythread"""
+
+        def run(self):
+            func(*self._func_args, **self._func_kwargs)
+            clean_up_threads()
+
+        def start(self, *args, **kwargs):
+            self._func_args = args
+            self._func_kwargs = kwargs
             super(MyThread, self).start()
 
     def new_func(*args, **kwargs):
@@ -60,40 +92,3 @@ def thread_dec(func):
         mythread.start(*args, **kwargs)
 
     return new_func
-
-
-class Example(QtGui.QWidget):
-    
-    def __init__(self):
-        super(Example, self).__init__()
-        
-        self.initUI()
-        
-    def initUI(self):               
-        
-        qbtn = QtGui.QPushButton('Quit', self)
-        qbtn.clicked.connect(self.shjj)
-        qbtn.resize(qbtn.sizeHint())
-        qbtn.move(50, 50)       
-        
-        self.setGeometry(300, 300, 250, 150)
-        self.setWindowTitle('Quit button')    
-        self.show()
-
-    @thread_dec
-    def shjj(self):
-        t = time.time()
-        for n in range(10):
-            time.sleep(1)
-            print(t)
-        print("DONE")
-        
-def main():
-    
-    app = QtGui.QApplication(sys.argv)
-    ex = Example()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()
