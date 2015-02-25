@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""Test of the mechanism for creating composite widgets
+"""Test of selection of widgets, move and resize.
 
-RESULT: NOT FAVORABLE. Probably not a good idea. The move and change code will
-get to contain a lot of special cases. Look into keeping widget and label
-seperate.
+RESULT: Good. It seems feasable to implement. There are some design decisions
+on the design of the builder that results from this.
 
 This program is adapted from the Zetcode tutorial:
 http://zetcode.com/gui/pysidetutorial/ by Jan Bodnar.
@@ -25,7 +24,7 @@ class MovableMixin(object):
         super(MovableMixin, self).__init__(*args, **kwargs)
         self._offset = None
         self._draw_active = False
-        self._pen = QtGui.QPen(QtGui.QColor(255, 0, 0), 5)
+        self._pen = QtGui.QPen(QtGui.QColor(255, 0, 0, 127), 5)
         self._qp = QtGui.QPainter()
 
     def mousePressEvent(self, e):
@@ -34,7 +33,13 @@ class MovableMixin(object):
 
     def mouseMoveEvent(self, e):
         if self._offset is not None:
-            self.move(self.mapToParent(e.pos() - self._offset))
+            if self._offset.x() > self.width() - BORDERS:
+                diff = e.pos() - self._offset
+                self.resize(self.width() + diff.x(), self.height())
+                self._offset = e.pos()
+            else:
+            #print(self.width())
+                self.move(self.mapToParent(e.pos() - self._offset))
 
     def mouseReleaseEvent(self, e):
         if self._offset == e.pos():
@@ -75,6 +80,7 @@ class Example(QtGui.QWidget):
         self._present = None
         self._pen = QtGui.QPen(QtGui.QColor(255, 0, 0), 2)
         self._qp = QtGui.QPainter()
+        self._last_selection_square = None
         self.widgets = []
         self.initUI()
         
@@ -115,10 +121,13 @@ class Example(QtGui.QWidget):
         if self._offset is not None:
             self._present = e.pos()
             self.update()
-            print('Look at me at', e.pos())
 
     def mouseReleaseEvent(self, e):
         self._offset = None
+        if self._last_selection_square is not None:
+            print('select', self._last_selection_square)
+            self._last_selection_square = None
+            self.update()
 
     def paintEvent(self, e):
         """Override paint event to draw active rectangle"""
@@ -129,8 +138,10 @@ class Example(QtGui.QWidget):
             self._qp.setPen(self._pen)
             pos = self._offset.toTuple()
             current = self._present.toTuple()
-            args = top_left = [min(a, b) for a,b in zip(pos, current)]
+            args = [min(a, b) for a,b in zip(pos, current)]
             args += [abs(a - b) - 1 for a,b in zip(pos, current)]
+            # Top left x, y and width height
+            self._last_selection_square = args
             
             width, height = self.size().toTuple()
             self._qp.drawRect(*args)
@@ -146,58 +157,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-class LabeledButton(QtGui.QWidget):
-    def __init__(self, parent, debug=False):
-        super(LabeledButton, self).__init__(parent)
-
-        # Init UI
-        self.label = QtGui.QLabel('My button .................', self)
-        self.button = QtGui.QPushButton('Look at me', self)
-        vbox = QtGui.QVBoxLayout()
-        vbox.setSpacing(BORDERS)
-        vbox.setContentsMargins(*[BORDERS] * 4)
-        vbox.addWidget(self.label)
-        vbox.addWidget(self.button)
-        self.setLayout(vbox)
-
-        # In debug color widget backgrounds
-        if debug:
-            self._color_widget(self, (255, 0, 0, 50))
-            self._color_widget(self.label, (0, 255, 0, 50))
-            self._color_widget(self.button, (0, 255, 0, 50))
-
-        # Bind
-        self.bind(parent)
-
-        self.mouse_press = None
-
-    def bind(self, parent):
-        self.button.clicked.connect(parent.look_at_me)
-
-    def mouseReleaseEvent(self, e):
-        #size = self.size()
-        #size += QtCore.QSize(10, 0)
-        #self.resize(size)
-        if e.pos() == self.mouse_press:
-            print('Clicked')
-
-    def mousePressEvent(self, e):
-        pos = e.pos()
-        self.mouse_press_pos = pos
-
-        if pos.x() <= BORDERS:
-            self.mouse_os = 'left'
-
-        if pos.x() >= self.width() - BORDERS:
-            self.mouse_on = 'right'
-
-    @staticmethod
-    def _color_widget(widget, color):
-        widget.setAutoFillBackground(True)
-        palette = widget.palette()
-        #palette.setColor(widget.backgroundRole(), color)
-        palette.setColor(widget.backgroundRole(), QtGui.QColor(*color))
-        widget.setPalette(palette)
-
