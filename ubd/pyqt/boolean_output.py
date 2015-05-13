@@ -8,11 +8,11 @@ This module implements the following boolean output widgets: LED
 
 from __future__ import print_function
 
-from PyQt4.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt4.QtCore import Qt, pyqtSlot, pyqtProperty
 from PyQt4.QtGui import QFrame, QPen, QPainter, QHBoxLayout
 from PyQt4.QtGui import QWidget
 
-from common import COLOR_SCHEMES
+from .common import COLOR_SCHEMES
 
 
 class LED(QFrame):
@@ -21,16 +21,10 @@ class LED(QFrame):
     border_width = 2
     edge_width = 2
 
-    # Define stateChanged signal, which can be emitted with a boolean or no arguments
-    stateChanged = pyqtSignal([bool], [])
-
     def __init__(self, parent=None, initial_state=False, color_scheme='green', debug=False):
         super(LED, self).__init__(parent)
-        try:
-            self.color_scheme = COLOR_SCHEMES[color_scheme]
-        except KeyError:
-            message = 'Invalid color scheme name. Valid values are: {}'
-            raise ValueError(message.format(COLOR_SCHEMES.keys()))
+        self._color_scheme = None
+        self.setColorScheme(color_scheme)
 
         # Calculate the minimum size and set it
         minimum = (self.border_width + self.edge_width) * 2 + 1
@@ -48,24 +42,42 @@ class LED(QFrame):
 
         self.update()
 
-    def state(self):
+    def getColorScheme(self):
+        """Return the colorscheme"""
+        return self._color_scheme
+
+    def setColorScheme(self, color_scheme):
+        """Set the color scheme"""
+        color_scheme = str(color_scheme)
+        if color_scheme == self._color_scheme:
+            return
+        if color_scheme not in COLOR_SCHEMES.keys():
+            message = 'Invalid color scheme name. Valid values are: {}'
+            raise ValueError(message.format(COLOR_SCHEMES.keys()))
+        else:
+            self._color_scheme = color_scheme
+        self.update()
+
+    colorScheme = pyqtProperty(str, fget=getColorScheme, fset=setColorScheme)
+
+    def getState(self):
         """Return the boolean state"""
         return self._state
 
     @pyqtSlot(bool)
-    @pyqtSlot(bool, bool)
-    def setState(self, state, no_emit=False):
+    def setState(self, state):
         """Set the boolean state"""
-        self._state = state
-        self.update()
-        if not no_emit:
-            self.stateChanged.emit(self._state)
+        if state != self._state:
+            self._state = state
+            self.update()
+
+    state = pyqtProperty(bool, fget=getState, fset=setState)
 
     def paintEvent(self, _):
         """Redraw LED on paint event"""
         self.qpainter.begin(self)
         self.qpainter.setPen(self.pen)
-        self.qpainter.setBrush(self.color_scheme[self._state])
+        self.qpainter.setBrush(COLOR_SCHEMES[self._color_scheme][self._state])
         size = self.size()
         self.qpainter.drawEllipse(
             self.border_width,
@@ -88,8 +100,6 @@ def main():
         def __init__(self):
             super(Example, self).__init__()
             self.led = LED(color_scheme='green')
-            self.led.stateChanged.connect(self.receive)
-            self.led.stateChanged.connect(self.receive_with_args)
             hbox = QHBoxLayout()
             hbox.addWidget(self.led)
             self.setLayout(hbox)
@@ -105,16 +115,6 @@ def main():
             """Switcher"""
             self.last = not self.last
             self.led.setState(self.last)
-
-        @staticmethod
-        def receive():
-            """Receive stateChanged signal"""
-            print('receive')
-
-        @staticmethod
-        def receive_with_args(state):
-            """Receive stateChanged signal"""
-            print('receive', state)
 
 
     main_w = Example()
