@@ -18,6 +18,12 @@ from .common import COLOR_SCHEMES
 class LED(QFrame):
     """A LED boolean output"""
 
+    __ubd__ = {
+        'direction': 'output',
+        'fget': 'getState',
+        'fset': 'setState',
+    }
+
     border_width = 2
     edge_width = 2
 

@@ -5,7 +5,7 @@
 
 from __future__ import print_function
 
-from PyQt4.QtCore import pyqtSignal, pyqtSlot, pyqtProperty
+from PyQt4.QtCore import pyqtSignal, pyqtSlot, pyqtProperty, QMutex
 from PyQt4.QtGui import QPushButton
 
 from .common import COLOR_SCHEMES
@@ -14,13 +14,20 @@ from .common import COLOR_SCHEMES
 class LightButton(QPushButton):
     """A toggle button that lights up when true (pressed in) state
 
-    This class defines the ``stateChanged`` signal which optionally provides the new state
-    of the button. The difference between the ``stateChanged`` and the ``toggled`` signal
-    is that when using the setState method, it is optional (and off by default) whether to
-    also emit the stateChanged signal. Hence it is useful as a callback only when the
-    button is actually pressed.
+    This class defines the ``valueChanged`` signal which optionally provides the new state
+    of the button. The difference between the ``valueChanged`` and the ``toggled`` signal
+    is that when using the setValue method, it is optional (and off by default) whether to
+    also emit the valueChanged signal. Hence it is useful as a signal which is emitted
+    only when the button is actually pressed. This is also the behavior when the widget is
+    used as a property.
 
     """
+
+    __ubd__ = {
+        'direction': 'input',
+        'getter_function': 'getValue',
+        'setter_function': 'setValue',
+    }
 
     # The style sheet for the button, the color ints are formatted in, in __init__
     style_sheet = """
@@ -51,7 +58,7 @@ class LightButton(QPushButton):
     """
 
     # Define stateChanged signal, which can be emitted with a boolean or no arguments
-    stateChanged = pyqtSignal([bool], [])
+    valueChanged = pyqtSignal([bool], [])
 
     def __init__(self, parent=None, text='light_button', color_scheme='green',
                  initial_state=False):
@@ -60,27 +67,29 @@ class LightButton(QPushButton):
         self.setChecked(initial_state)
         self._color_scheme = None
         self.setColorscheme(color_scheme)
-        self.toggled.connect(self.stateChanged)
+        self.value_change_signal_mutex = QMutex()
+        self.toggled.connect(self.valueChanged)
 
-    def state(self):
+
+    def getValue(self):
         """Return the boolean state"""
         return self.isChecked()
 
     @pyqtSlot(bool)
     @pyqtSlot(bool, bool)
-    def setState(self, state, emit_state_changed=False):
+    def setValue(self, value, emit_value_changed=False):
         """Set the boolean state"""
-        if not emit_state_changed:
-            self.toggled.disconnect(self.stateChanged)
-        self.setChecked(state)
-        if not emit_state_changed:
-            self.toggled.connect(self.stateChanged)
+        # Make sure not to break the signal connections by trying to disconnecting
+        # something that isn't connected by preventing concurrent calls to this method
+        self.value_change_signal_mutex.lock()
+        if not emit_value_changed:
+            self.toggled.disconnect(self.valueChanged)
+        self.setChecked(value)
+        if not emit_value_changed:
+            self.toggled.connect(self.valueChanged)
+        self.value_change_signal_mutex.unlock()
 
-    def paintEvent(self, event):
-        """Hacked paint event"""
-        super(LightButton, self).paintEvent(event)
-
-    def colorscheme(self):
+    def getColorscheme(self):
         """Return the current colorscheme"""
         return self._color_scheme
 
@@ -92,7 +101,8 @@ class LightButton(QPushButton):
         false_rgba = COLOR_SCHEMES[self._color_scheme][False].getRgb()
         self.setStyleSheet(self.style_sheet.format(*(false_rgba + true_rgba)))
 
-    colorscheme_py = pyqtProperty(str, colorscheme, setColorscheme)
+    colorscheme = pyqtProperty(str, fget=getColorscheme, fset=setColorscheme,
+                               doc='Color scheme property')
 
 
 def main():
@@ -110,7 +120,7 @@ def main():
             super(Example, self).__init__()
             self.lightbutton = LightButton(text='Button', color_scheme='green')
             self.lightbutton.toggled.connect(self.toggle)
-            self.lightbutton.stateChanged.connect(self.changed)
+            self.lightbutton.valueChanged.connect(self.value_changed)
             hbox = QHBoxLayout()
             hbox.addWidget(self.lightbutton)
             self.setLayout(hbox)
@@ -122,7 +132,7 @@ def main():
         def use_state_change(self):
             """Use the state change method"""
             time.sleep(1)
-            self.lightbutton.setState(True)
+            self.lightbutton.setValue(True)
 
         @staticmethod
         def toggle(value):
@@ -130,7 +140,7 @@ def main():
             print('toggle', value)
 
         @staticmethod
-        def changed(value):
+        def value_changed(value):
             """Toggle callback"""
             print('changed', value)
 
