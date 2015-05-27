@@ -56,7 +56,7 @@ class LEDPlugin(QPyDesignerCustomWidgetPlugin):
     def icon(self):
         """Return the icon used to represent the custom widget"""
         module_abs_path = os.path.dirname(os.path.abspath(__file__))
-        icon_path = os.path.join(module_abs_path, 'icons', 'light_button.png')
+        icon_path = os.path.join(module_abs_path, 'icons', 'LED.png')
         return QtGui.QIcon(icon_path)
 
     def toolTip(self):

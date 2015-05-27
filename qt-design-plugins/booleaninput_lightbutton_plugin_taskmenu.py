@@ -86,10 +86,10 @@ class LightButtonDialog(QDialog):
         self.previewWidget.setText(widget.text())
         self.button_text.setText(widget.text())
         #- color scheme
-        self.previewWidget.setColorscheme(widget.colorscheme())
+        self.previewWidget.setColorscheme(widget.getColorscheme())
         for key in COLOR_SCHEMES.keys():
             self.color_scheme.addItem(key)
-        current_index = self.color_scheme.findText(widget.colorscheme())
+        current_index = self.color_scheme.findText(widget.getColorscheme())
         self.color_scheme.setCurrentIndex(current_index)
         #- initial state
         self.previewWidget.setDown(widget.isChecked())
@@ -112,7 +112,7 @@ class LightButtonDialog(QDialog):
             formWindow.cursor().setProperty(
                 "text", QVariant(self.button_text.text()))
             formWindow.cursor().setProperty(
-                "colorscheme_py", QVariant(self.color_scheme.currentText()))
+                "colorscheme", QVariant(self.color_scheme.currentText()))
             formWindow.cursor().setProperty(
                 "text", QVariant(self.button_text.text()))
             formWindow.cursor().setProperty(

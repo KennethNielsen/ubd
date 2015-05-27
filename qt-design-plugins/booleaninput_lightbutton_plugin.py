@@ -65,7 +65,7 @@ class LightButtonPlugin(QPyDesignerCustomWidgetPlugin):
 
     def whatsThis(self):
         """Return a short description for the widget used as a help text"""
-        what_is_this = 'This widget is used as a boolean input. It is a toggle buttons '\
+        what_is_this = 'This widget is used as a boolean input. It is a toggle button '\
                        'that lights up when pressed (in True state) which makes it '\
                        'easier to determine whether it is True of False at a glance'
         return what_is_this
