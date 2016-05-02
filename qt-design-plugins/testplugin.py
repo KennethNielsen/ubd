@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 # pylint: disable=interface-not-implemented,invalid-name
 
-"""A plugin for Qt Designer for the boolean input LightButton"""
+"""A plugin for Qt Designer for the TestWidget"""
 
 import os
 from PyQt4 import QtGui
 from PyQt4.QtDesigner import QPyDesignerCustomWidgetPlugin
-from ubd.pyqt.boolean_input import LightButton
-from booleaninput_lightbutton_plugin_taskmenu import LightButtonTaskMenuFactory
+from ubd.pyqt.testwidget import TestWidget
 
 
-class LightButtonPlugin(QPyDesignerCustomWidgetPlugin):
+class TestPlugin(QPyDesignerCustomWidgetPlugin):
     """The LightButtonPlugin class
 
     Provides a Python custom plugin for Qt Designer by implementing the
@@ -18,22 +17,17 @@ class LightButtonPlugin(QPyDesignerCustomWidgetPlugin):
     """
 
     def __init__(self, parent=None):
-        super(LightButtonPlugin, self).__init__()
+        super(TestPlugin, self).__init__()
         self.initialized = False
 
+    #def __getattribute__(self, name):
+    #    print 'plugin', name
+    #    return super(TestPlugin, self).__getattribute__(name)
+        
     def initialize(self, formEditor):
         """Initialize the plugin"""
         if self.initialized:
             return
-
-        # We register an extension factory to add a extension to each form's
-        # task menu.
-        manager = formEditor.extensionManager()
-        if manager:
-            self.factory = LightButtonTaskMenuFactory(manager)
-            manager.registerExtensions(
-                self.factory, "com.trolltech.Qt.Designer.TaskMenu"
-            )
 
         self.initialized = True
 
@@ -43,11 +37,11 @@ class LightButtonPlugin(QPyDesignerCustomWidgetPlugin):
 
     def createWidget(self, parent):
         """Create a new instance of this widget"""
-        return LightButton(parent)
+        return TestWidget(parent)
 
     def name(self):
         """Return the name of the custom widget class"""
-        return "LightButton"
+        return "TestWidget"
 
     def group(self):
         """Return the Qt Designer Widget Group for this widget"""
@@ -76,8 +70,8 @@ class LightButtonPlugin(QPyDesignerCustomWidgetPlugin):
 
     def domXml(self):
         """Return an XML description for the widget"""
-        return '<widget class="LightButton" name="lightbutton" />\n'
+        return '<widget class="TestWidget" name="testwidget" />\n'
 
     def includeFile(self):
         """Return the modules that contains this class"""
-        return "ubd.pyqt.boolean_input"
+        return "ubd.pyqt.testwidget"
