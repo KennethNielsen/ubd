@@ -8,3 +8,10 @@ COLOR_SCHEMES = OrderedDict((
     ('red', {False: QColor('dark red'), True: QColor('red')}),
     ('blue', {False: QColor('dark blue'), True: QColor('deep sky blue')}),
 ))
+
+
+class LabeledWidget:
+    """A common implementation of a widget with a label"""
+
+    def __init__(self, label):
+        pass
