@@ -1,5 +1,8 @@
 """The implementation of the main window"""
 
+
+import __main__
+from os import path
 from yaml import load
 from PyQt5.QtWidgets import QWidget
 from .input_output import InputOutput
@@ -10,7 +13,10 @@ class UBDWindow(QWidget):
 
     def __init__(self, definition_filepath):
         super().__init__()
-        # Load the definition and check the version
+        # Load the definition from absolute or relative path and chech version
+        if not path.isabs(definition_filepath):
+            main_file_dir = path.dirname(__main__.__file__)
+            definition_filepath = path.join(main_file_dir, definition_filepath)
         self.definition = load_definition(definition_filepath)
         self._version_check()
 
