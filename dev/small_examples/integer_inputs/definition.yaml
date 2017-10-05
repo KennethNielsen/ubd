@@ -1,0 +1,18 @@
+style: ubd
+version: 0
+main_window:
+  size: [600, 600]
+  title: 'TestWindow'
+  content:
+    - class: IntegerInput
+      name: integer_input1
+      position: [100, 100]
+      default_value: 47
+      label: {label: myint, position: [100, 80]}
+      callback: change
+    - class: IntegerInput
+      name: integer_input2
+      position: [400, 400]
+      default_value: 7
+      label: {label: myint2, position: [400, 380]}
+      callback: change
