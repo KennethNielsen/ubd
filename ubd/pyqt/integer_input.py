@@ -38,10 +38,11 @@ class IntegerInput(LabeledWidget):
         )
 
     # FIXME Think about get set functionality and set without value_changed signal
-    @property
-    def value(self):
+    def get_value(self):
         return self._spin_box.value()
 
-    @value.setter
-    def value(self, value):
+    def set_value(self, value, do_not_emit_value_changed=False):
+        # FIXME, implement disabling signals
         self._spin_box.setValue(value)
+
+    value = property(get_value, set_value)
